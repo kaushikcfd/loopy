@@ -2279,6 +2279,40 @@ def infer_arg_descr(program):
 # }}}
 
 
+# {{{ remove_gbarriers_if_no_concurrent_tags
+
+def remove_gbarriers_if_no_concurrent_tags(program):
+    from loopy.kernel.data import ConcurrentTag
+    from loopy.kernel.instruction import BarrierInstruction
+    from loopy.transform.instruction import remove_instructions
+
+    for name, clbl in program.callables_table.items():
+        if isinstance(clbl, CallableKernel):
+            for iname in clbl.subkernel.all_inames():
+                if clbl.subkernel.iname_tags_of_type(iname, ConcurrentTag):
+                    return program
+        elif isinstance(clbl, ScalarCallable):
+            pass
+        else:
+            raise NotImplementedError(f"Unknonwn callable {type(clbl)}.")
+
+    for name, clbl in program.callables_table.items():
+        if isinstance(clbl, CallableKernel):
+            subknl = clbl.subkernel
+
+            for insn in subknl.instructions:
+                if isinstance(insn, BarrierInstruction):
+                    subknl = remove_instructions(subknl, {insn.id})
+            program = program.with_kernel(subknl)
+        elif isinstance(clbl, ScalarCallable):
+            pass
+        else:
+            raise NotImplementedError(f"Unknown callable {type(clbl)}.")
+
+    return program
+
+# }}}
+
 # {{{  inline_kernels_with_gbarriers
 
 
@@ -2462,6 +2496,9 @@ def preprocess_program(program, device=None):
 
     # infer arg descrs of the callables
     program = infer_arg_descr(program)
+
+    # FIXME: Remove this with a better inline_kernels_with_gbarriers
+    program = remove_gbarriers_if_no_concurrent_tags(program)
 
     # Ordering restriction:
     # callees with gbarrier in them must be inlined after inferrring arg_descr.
