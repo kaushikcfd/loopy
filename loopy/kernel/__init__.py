@@ -154,7 +154,24 @@ class _not_provided:  # noqa: N801
     pass
 
 
-class LoopKernel(ImmutableRecordWithoutPickling, Taggable):
+class ImmutableRecordWithoutPickingWithTargetedCopies(ImmutableRecordWithoutPickling):  # noqa: E501
+    def __getattr__(self, key):
+        if key.startswith("with_"):
+            skey = key[5:]
+            if skey in self.fields:
+                return lambda x: ImmutableRecordWithoutPickling.copy(self,
+                                                                     **{skey: x})
+
+        return super().__getattr__(key)
+
+    def copy(self, **kwargs):
+        from functools import reduce
+        return reduce(lambda obj, kwarg: getattr(obj,
+                                                 f"with_{kwarg[0]}")(kwarg[1]),
+                      kwargs.items(), self)
+
+
+class LoopKernel(ImmutableRecordWithoutPickingWithTargetedCopies, Taggable):
     """These correspond more or less directly to arguments of
     :func:`loopy.make_kernel`.
 
