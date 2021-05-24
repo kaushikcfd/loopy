@@ -684,7 +684,7 @@ class PyOpenCLPythonASTBuilder(PythonASTBuilderBase):
             if tv.address_space == AddressSpace.GLOBAL),
             key=lambda tv: tv.name)
 
-    def get_temporary_decls(self, codegen_state, schedule_state):
+    def get_temporary_decls(self, kernel, subkernel_name):
         from genpy import Assign, Comment, Line
 
         def alloc_nbytes(tv):
@@ -693,9 +693,9 @@ class PyOpenCLPythonASTBuilder(PythonASTBuilderBase):
             return tv.dtype.numpy_dtype.itemsize * reduce(mul, tv.shape, 1)
 
         from pymbolic.mapper.stringifier import PREC_NONE
-        ecm = self.get_expression_to_code_mapper(codegen_state)
+        ecm = self.get_expression_to_code_mapper(kernel, var_subst_map={})
 
-        global_temporaries = self._get_global_temporaries(codegen_state)
+        global_temporaries = self._get_global_temporaries(kernel)
         if not global_temporaries:
             return []
 
