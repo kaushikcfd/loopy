@@ -948,7 +948,6 @@ class LoopKernel(ImmutableRecordWithoutPickingWithTargetedCopies, Taggable):
             # keep walking up tree to find *all* parents
             dom_result = []
             while parent is not None:
-                import pudb; pu.db
                 dom_result.insert(0, parent)
                 parent = ppd[parent]
 
