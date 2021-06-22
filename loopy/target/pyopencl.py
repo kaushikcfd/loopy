@@ -671,8 +671,10 @@ class PyOpenCLPythonASTBuilder(PythonASTBuilderBase):
                     Return("_lpy_evt"),
                     ]))
 
-    def get_function_declaration(self, kernel, name, implemented_data_info,
-                                 is_generating_device_code):
+    def get_function_declaration(self, kernel, callables_table, name,
+                                 implemented_data_info,
+                                 is_generating_device_code,
+                                 is_entrypoint):
         # no such thing in Python
         return None
 
@@ -684,7 +686,7 @@ class PyOpenCLPythonASTBuilder(PythonASTBuilderBase):
             if tv.address_space == AddressSpace.GLOBAL),
             key=lambda tv: tv.name)
 
-    def get_temporary_decls(self, kernel, subkernel_name):
+    def get_temporary_decls(self, kernel, callables_table, subkernel_name):
         from genpy import Assign, Comment, Line
 
         def alloc_nbytes(tv):
@@ -693,7 +695,8 @@ class PyOpenCLPythonASTBuilder(PythonASTBuilderBase):
             return tv.dtype.numpy_dtype.itemsize * reduce(mul, tv.shape, 1)
 
         from pymbolic.mapper.stringifier import PREC_NONE
-        ecm = self.get_expression_to_code_mapper(kernel, var_subst_map={},
+        ecm = self.get_expression_to_code_mapper(kernel, callables_table,
+                                                 var_subst_map={},
                                                  vectorization_info=None)
 
         global_temporaries = self._get_global_temporaries(kernel)
@@ -712,13 +715,15 @@ class PyOpenCLPythonASTBuilder(PythonASTBuilderBase):
             Comment("}}}"),
             Line()]
 
-    def get_kernel_call(self, kernel, name, implemented_data_info, extra_args):
-        ecm = self.get_expression_to_code_mapper(kernel, var_subst_map={},
+    def get_kernel_call(self, kernel, callables_table, name,
+                        implemented_data_info, extra_args):
+        ecm = self.get_expression_to_code_mapper(kernel, callables_table,
+                                                 var_subst_map={},
                                                  vectorization_info=None)
 
         from loopy.schedule.tree import get_insns_in_function
         gsize, lsize = kernel.get_grid_sizes_for_insn_ids_as_exprs(
-            get_insns_in_function(kernel, name))
+            get_insns_in_function(kernel, name), callables_table)
 
         if not gsize:
             gsize = (1,)
@@ -806,9 +811,11 @@ class PyOpenCLCASTBuilder(OpenCLCASTBuilder):
 
     # }}}
 
-    def get_expression_to_c_expression_mapper(self, kernel, var_subst_map,
+    def get_expression_to_c_expression_mapper(self, kernel, callables_table,
+                                              var_subst_map,
                                               vectorization_info):
-        return ExpressionToPyOpenCLCExpressionMapper(kernel, self, var_subst_map,
+        return ExpressionToPyOpenCLCExpressionMapper(kernel, callables_table,
+                                                     self, var_subst_map,
                                                      vectorization_info)
 # }}}
 
@@ -816,11 +823,14 @@ class PyOpenCLCASTBuilder(OpenCLCASTBuilder):
 # {{{ volatile mem acccess target
 
 class VolatileMemPyOpenCLCASTBuilder(PyOpenCLCASTBuilder):
-    def get_expression_to_c_expression_mapper(self, kernel, var_subst_map,
+    def get_expression_to_c_expression_mapper(self, kernel, callables_table,
+                                              var_subst_map,
                                               vectorization_info):
         from loopy.target.opencl import \
                 VolatileMemExpressionToOpenCLCExpressionMapper
-        return VolatileMemExpressionToOpenCLCExpressionMapper(kernel, self,
+        return VolatileMemExpressionToOpenCLCExpressionMapper(kernel,
+                                                              callables_table,
+                                                              self,
                                                               var_subst_map,
                                                               vectorization_info)
 
