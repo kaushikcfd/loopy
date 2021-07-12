@@ -441,8 +441,9 @@ def generate_code_v2(program):
     from loopy.type_inference import infer_unknown_types
     program = infer_unknown_types(program, expect_completion=True)
 
-    from loopy.schedule import linearize
-    program = linearize(program)
+    if program.state < KernelState.LINEARIZED:
+        from loopy.schedule import linearize
+        program = linearize(program)
 
     # Why diverge? Generated code for a non-entrypoint kernel and an entrypoint
     # kernel isn't same for a general loopy target. For example in OpenCL, a
@@ -451,8 +452,8 @@ def generate_code_v2(program):
     # callable should be exclusively an entrypoint or a non-entrypoint kernel.
     program = diverge_callee_entrypoints(program)
 
-    from loopy.check import pre_codegen_checks
-    pre_codegen_checks(program)
+    # from loopy.check import pre_codegen_checks
+    # pre_codegen_checks(program)
 
     host_programs = {}
     device_programs = []

@@ -51,6 +51,35 @@ def get_block_boundaries(schedule):
 # }}}
 
 
+# {{{ get return kernel idx
+
+def get_nearest_return_from_kernel(kernel):
+    from loopy.kernel import LoopKernel
+    from loopy.schedule import (RunInstruction, EnterLoop, LeaveLoop,
+                                CallKernel, ReturnFromKernel, Barrier)
+    assert isinstance(kernel, LoopKernel)
+    assert isinstance(kernel.linearization, list)
+    return_from_kernel_idxs = {}
+    current_return_from_kernel = None
+    for sched_idx, sched_item in list(enumerate(kernel.linearization))[::-1]:
+        if isinstance(sched_item, CallKernel):
+            return_from_kernel_idxs[sched_idx] = current_return_from_kernel
+            current_return_from_kernel = None
+        elif isinstance(sched_item, ReturnFromKernel):
+            assert current_return_from_kernel is None
+            current_return_from_kernel = sched_idx
+            return_from_kernel_idxs[sched_idx] = current_return_from_kernel
+        elif isinstance(sched_item, (RunInstruction, EnterLoop, LeaveLoop,
+                                     Barrier)):
+            return_from_kernel_idxs[sched_idx] = current_return_from_kernel
+        else:
+            raise NotImplementedError(type(sched_item))
+
+    return return_from_kernel_idxs
+
+# }}}
+
+
 # {{{ subkernel tools
 
 def temporaries_read_in_subkernel(kernel, subkernel):

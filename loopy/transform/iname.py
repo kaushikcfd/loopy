@@ -665,6 +665,7 @@ def join_inames(kernel, inames, new_iname=None, tag=None, within=None):
 
 # {{{ untag inames
 
+@for_each_kernel
 def untag_inames(kernel, iname_to_untag, tag_type):
     """
     Remove tags on *iname_to_untag* which matches *tag_type*.

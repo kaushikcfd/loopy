@@ -1108,6 +1108,7 @@ def check_variable_access_ordered(kernel):
 
 
 def pre_schedule_checks(t_unit):
+    return
     try:
         logger.debug("pre-schedule checks start for entrypoints: "
                      f"{t_unit.entrypoints}.")
