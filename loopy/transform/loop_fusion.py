@@ -753,11 +753,13 @@ def rename_inames_in_batch(kernel, batches: Mapping[str, FrozenSet[str]]):
     :arg batches: A mapping from ``new_iname`` to a :class:`frozenset` of
         inames that are to be renamed to ``new_iname``.
     """
-    from loopy.transform.iname import rename_iname
+    from loopy.transform.iname import rename_inames, remove_unused_inames
     for new_iname, candidates in batches.items():
-        for iname in candidates:
-            kernel = rename_iname(kernel, iname, new_iname, existing_ok=True)
+        kernel = rename_inames(kernel, candidates, new_iname,
+                               remove_newly_unused_inames=False)
 
-    return kernel
+    return remove_unused_inames(kernel, reduce(frozenset.union,
+                                               batches.values(),
+                                               frozenset()))
 
 # vim: foldmethod=marker
