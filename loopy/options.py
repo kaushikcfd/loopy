@@ -27,7 +27,7 @@ import os
 from warnings import warn
 
 
-ALLOW_TERMINAL_COLORS = True
+ALLOW_TERMINAL_COLORS = False
 
 
 class _ColoramaStub:

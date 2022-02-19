@@ -107,4 +107,16 @@ def get_reduce_insno(kernel):
     return reduce_insno
 
 
+def get_reduce_inameo(kernel):
+    from functools import reduce
+    reduce_inameo = Relation()
+
+    for iname in reduce(frozenset.union,
+                        (insn.reduction_inames()
+                         for insn in kernel.instructions),
+                        frozenset()):
+        facts(reduce_inameo, (iname,))
+
+    return reduce_inameo
+
 # vim: fdm=marker

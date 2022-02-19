@@ -1663,11 +1663,15 @@ class _ReductionInameUniquifier(RuleAwareIdentityMapper):
 
 
 @for_each_kernel
-def make_reduction_inames_unique(kernel, inames=None, within=None):
+def make_reduction_inames_unique(kernel, inames=None, within=None,
+                                 do_not_propagate_metadata=False):
     """
     :arg inames: if not *None*, only apply to these inames
     :arg within: a stack match as understood by
         :func:`loopy.match.parse_stack_match`.
+    :arg do_not_propagate_metadata: If *True* the tags attached to *inames*
+        would not be propagated to their duplicated counterparts. (Defaults to
+        *False*)
 
     .. versionadded:: 2016.2
     """
@@ -1699,6 +1703,18 @@ def make_reduction_inames_unique(kernel, inames=None, within=None):
         kernel = kernel.copy(
                 domains=domch.get_domains_with(
                     duplicate_axes(domch.domain, [old_iname], [new_iname])))
+
+    # }}}
+
+    # {{{ copy metadata
+
+    inames = kernel.inames
+
+    for old_iname, new_iname in r_uniq.old_to_new:
+        inames = inames.set(new_iname,
+                            inames[old_iname].copy(name=new_iname))
+
+    kernel = kernel.copy(inames=inames)
 
     # }}}
 
