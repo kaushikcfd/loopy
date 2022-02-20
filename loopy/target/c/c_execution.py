@@ -472,9 +472,13 @@ class CKernelExecutor(KernelExecutorBase):
         c_kernels = []
 
         for dp in codegen_result.device_programs:
-            c_kernels.append(CompiledCKernel(dp,
-                codegen_result.implemented_data_infos[entrypoint], all_code,
-                self.program.target, self.compiler))
+            c_kernels.append(CompiledCKernel(
+                dp,
+                codegen_result.get_idis_for_subkernel(self.program[entrypoint],
+                                                      dp.name),
+                all_code,
+                self.program.target,
+                self.compiler))
 
         return _KernelInfo(
                 program=program,
