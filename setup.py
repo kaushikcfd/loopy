@@ -96,7 +96,7 @@ setup(name="loopy",
           "codepy>=2017.1",
           "colorama",
           "Mako",
-          "pyrsistent",
+          "pyrsistent<0.19",
           "immutables",
           ],
 
