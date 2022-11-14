@@ -96,7 +96,8 @@ setup(name="loopy",
           "codepy>=2017.1",
           "colorama",
           "Mako",
-          "pyrsistent<0.19",
+          # pyrsistent 0.19.1 is buggy (https://github.com/tobgu/pyrsistent/issues/263)
+          "pyrsistent!=0.19.1",
           "immutables",
           ],
 
